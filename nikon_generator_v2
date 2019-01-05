@@ -1,14 +1,12 @@
 void setup()
 {
-  TCCR0A  = _BV(COM0B1) | _BV(WGM01) | _BV(WGM00); //Modo Fast PWM, TOP = OCRA
-  TCCR0B  = _BV(WGM02) | _BW(CS00); //Reloj de 8[MHz]
-  //Valores de comparacion
-  OCR0A   = 210-1; //TOP
-  OCR0B   = 105-1; //COMPARE
-  DDRB  = _BV(DDB1);
-  
+TCCR0A = _BV(COM0B1)| _BV(WGM01) | _BV(WGM00) ; 
+TCCR0B = _BV(WGM02) | _BV(CS02)|_BV(CS00) ; 
+OCR0A  = 255;
+OCR0B  = 127;
+DDRB   = _BV(DDB0)| _BV(DDB1);
 }
 void loop()
 {
-     
+  
 }
