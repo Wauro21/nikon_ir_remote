@@ -7,11 +7,14 @@ OUT = $(MAIN:.c=.elf)
 IC= t85
 ISP = usbtiny
 SAFE_CLK = 125kHz
+MMCU=attiny85
+IC_CLOCK=8000000UL
+
 default: build
 
 build:
 	@echo "[BUILD] Generating ELF file"
-	@$(CC) $(MAIN) -o $(OUT) $(WARNINGS_FLAGS)
+	@$(CC) $(MAIN) -DF_CPU=$(IC_CLOCK) -mmcu=$(MMCU) -o $(OUT) $(WARNINGS_FLAGS)
 
 
 BUILD_RESULT := $(wildcard $(OUT))
