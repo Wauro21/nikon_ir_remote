@@ -2,6 +2,7 @@
 #include <avr/interrupt.h>
 
 volatile uint8_t pin_enable = 0U;
+volatile uint8_t t1_interrupt_counter = 0U;
 
 int main(void)
 {
@@ -33,19 +34,42 @@ int main(void)
     /// Enable adc
     ADCSRA |= _BV(ADEN);
 
+
+    /// Configure Timer 1
+    TCCR1 = 0;
+    GTCCR = 0;
+    TCNT1 = 0;
+    TIMSK = 0;
+
+    /// Enable ctc on timer 1
+    // TCCR1 |= _BV(CTC1);
+    TCCR1 |= _BV(CS13) | _BV(CS12) | _BV(CS11) | _BV(CS10); /// prescaler 16384
+
+    TIMSK |= _BV(TOIE1);
+
+
+
     /// Start first conversion
     ADCSRA |= _BV(ADSC);
 
     sei();
 
     while(1){
-        if(pin_enable) PORTB |= _BV(PB0);
+        // if(pin_enable) PORTB |= _BV(PB0);
+        // else PORTB &= ~_BV(PB0);
+
+        if(t1_interrupt_counter == 0U) PORTB |= _BV(PB0);
         else PORTB &= ~_BV(PB0);
     };
     return 0;
 }
 
 ISR(ADC_vect){
-    if(ADCH > 127U) pin_enable = 1U;
+    if(ADCH <= 10U) pin_enable = 1U;
     else pin_enable = 0U;
+}
+
+ISR(TIMER1_OVF_vect){
+    if(t1_interrupt_counter < 1U) t1_interrupt_counter += 1;
+    else t1_interrupt_counter = 0;
 }
