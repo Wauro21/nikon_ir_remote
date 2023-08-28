@@ -5,14 +5,12 @@ volatile uint8_t pin_enable = 0U;
 volatile uint16_t t1_interrupt_counter = 0U; /// 16 bits for larger times
 volatile uint16_t t1_max_counter_value = 0U;
 volatile uint8_t state = 0U;
-volatile uint8_t low_adc_output = 0U;
-volatile uint16_t adc_output = 0U;
+// volatile uint8_t low_adc_output = 0U;
+// volatile uint16_t adc_output = 0U;
 
 int main(void)
 {
     uint8_t t1_enable = 0U; // Disabled by default
-    uint16_t t1_evaluation_value = 0U;
-
 
     /// PB3 is the read input and PB0 as output
     DDRB = 0;
@@ -27,7 +25,7 @@ int main(void)
     ADCSRB = 0; /// this sets free running mode
 
     /// enable left adjust for 8 bit precision
-    // ADMUX |= _BV(ADLAR);
+    ADMUX |= _BV(ADLAR);
     /// Select PB3 as input 
     ADMUX |= ADC3D;
 
@@ -69,25 +67,21 @@ int main(void)
                 /// Turns off the counter part
                 t1_enable = 0U;
                 t1_max_counter_value = 0U;
-                t1_evaluation_value = 255U; /// imposible value while stopped
                 break;
 
             case 1U:
                 t1_enable = 1U;
                 t1_max_counter_value = 1U;
-                t1_evaluation_value = 0U;
                 break;
 
             case 2U:
                 t1_enable = 1U;
                 t1_max_counter_value = 2U;
-                t1_evaluation_value = 0U;
                 break;
 
             case 3U:
                 t1_enable = 1U;
                 t1_max_counter_value = 4U;
-                t1_evaluation_value = 0U;
                 break;
         }
 
@@ -95,7 +89,7 @@ int main(void)
         if(t1_enable){
             /// Update timer status
             TCCR1 |= _BV(CS13) | _BV(CS12) | _BV(CS11) | _BV(CS10);
-            if(t1_interrupt_counter == t1_evaluation_value) PORTB |= _BV(PB0);
+            if(t1_interrupt_counter == 0U) PORTB |= _BV(PB0);
             else PORTB &= ~_BV(PB0);
         }
 
@@ -113,24 +107,24 @@ int main(void)
 
 ISR(ADC_vect){
 
-    low_adc_output = ADCL;
-    adc_output = ADCH << 8 | low_adc_output;
+    // low_adc_output = ADCL;
+    // adc_output = ADCH << 8 | low_adc_output;
 
-    switch (adc_output)
+    switch (ADCH)
     {
-    case 0U ... 255U:
+    case 0U ... 63U:
         state = 0U;
         break;
 
-    case 256U ... 511U:
+    case 64U ... 127U:
         state = 1U;
         break;
     
-    case 512U ... 767U:
+    case 128U ... 191U:
         state = 2U;
         break;
 
-    case 768U ... 1023U:
+    case 192U ... 255U:
         state = 3U;
         break;
 
