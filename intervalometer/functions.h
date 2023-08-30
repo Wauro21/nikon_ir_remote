@@ -8,6 +8,9 @@
 
 /// Variables
 volatile uint8_t adc_status; /// Holds the adc status
+volatile uint8_t t0_status;
+/// @brief Holds the required state for the Timer0 out pin.
+volatile uint8_t t0_out_enable;
 
 /// Functions
 
@@ -29,6 +32,22 @@ void stopADC(void);
 /// @param  void
 void triggerADC(void);
 
+/// @brief Enables the ADC and starts a conversion to read the value of selector input
+/// @param  void
 void readInterval(void);
+
+/// @brief Starts the timer 1 to generate an overflow interrupt with a frequency 1.9 Hz
+/// @param  void
+void startTimer1(void);
+
+/// @brief Stops timer 1
+/// @param  void
+void stopTimer1(void);
+
+/// @brief Configures timer 0 to generate a 38kHz square wave.
+/// @param  void
+// void setupTimer0(void);
+
+void sendCMD(void);
 
 #endif
