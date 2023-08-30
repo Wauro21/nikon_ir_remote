@@ -4,7 +4,7 @@
 #include <avr/io.h>
 
 /// Parameters
-#define MAIN_BUTTON PINB4
+#define MAIN_BUTTON PINB2
 
 /// Variables
 volatile uint8_t adc_status; /// Holds the adc status

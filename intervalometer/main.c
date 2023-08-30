@@ -16,27 +16,36 @@ volatile uint16_t t1_interrupt_counter = 0U;
 volatile uint16_t t1_max_counter_value = 0U;
 
 
+/// TEMPORAL
+volatile uint8_t stop_button_timer = 0U;
+volatile uint8_t stop_button_flag = 0U;
+
+
 int main(void){
+
+    // uint8_t stop_btn_state = 0;
+
+
+
     adc_status = 0x00;
     t0_status = 0x00;
     t0_out_enable = 0x00;
 
     /// TEMPORAL -> Enable when pin is high
-    DDRB = 0; /// Inputs -> PB3 potentiometer, PB4 button
-    DDRB |= _BV(PB0); /// PB0 used for IR led.
+    DDRB = 0; /// Inputs -> PB3 potentiometer, PB2 button
+    DDRB |= _BV(PB0) | _BV(PB4); /// PB0 used for IR led.
 
     PORTB = 0; /// TEMPORAL
-    PORTB |= _BV(PB4); // Enable pull up of PB4
+    PORTB |= _BV(PB2); // Enable pull up of PB2
 
     /// Interrupts 
-    // MCUCR = 0;
-    // MCUCR |= _BV(ISC01); /// Falling edge on pin generates interrupts
+    MCUCR = 0;
 
     GIMSK = 0;
     // GIMSK |= _BV(PCIE); /// Enable pin change interrupt
 
     PCMSK = 0;
-    PCMSK |= _BV(PCINT4); /// Enable pin change interrupt on PB4
+    // PCMSK |= _BV(PCINT4); /// Enable pin change interrupt on PB4
 
 
     /// ADC configurations
@@ -79,10 +88,24 @@ int main(void){
             /// Read adc and set timer 1 limit
             readInterval();
             if(t1_max_counter_value == 0U) sendCMD();
-            else PORTB |= _BV(PB0);
+            else{
+                /// Start timer 1
+                startTimer1();
+                GIMSK |= _BV(INT0); /// Enable pin change interrupt
+                while(1){
+                    if(t1_interrupt_counter == 0U) sendCMD();
+
+                    /// Request stop
+                    
+                }
+            }
         }
     };
 
+}
+
+ISR(INT0_vect){
+    PORTB ^= _BV(PB4);
 }
 
 ISR(ADC_vect){
@@ -180,6 +203,8 @@ ISR(ADC_vect){
 ISR(TIMER1_OVF_vect){
     if(t1_interrupt_counter < t1_max_counter_value) t1_interrupt_counter += 1;
     else t1_interrupt_counter = 0;
+
+    if(stop_button_flag) stop_button_timer += 1;
 }
 
 
