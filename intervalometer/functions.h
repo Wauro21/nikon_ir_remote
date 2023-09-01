@@ -17,7 +17,7 @@ volatile uint8_t t0_out_enable;
 /// @brief Debounces the value read from MAIN_BUTTON
 /// @param  void
 /// @return uint8_t -> 1 if the button was pressed.
-uint8_t readButton(void);
+uint8_t readButton(uint32_t* state);
 
 
 /// @brief Sets the ADCSRA register to enable the ADC

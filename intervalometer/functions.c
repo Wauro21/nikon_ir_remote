@@ -2,13 +2,15 @@
 
 /// Button control
 
-uint8_t readButton(void){
-    static uint32_t state = 0;
-    uint8_t btn_read = PINB & _BV(MAIN_BUTTON);
-    
+uint8_t readButton(uint32_t* state){
+    uint8_t btn_read = (~PINB & _BV(MAIN_BUTTON))>>MAIN_BUTTON;
     /// Read and shift for debouncing
-    state = (state << 1) | btn_read;
-    return (uint8_t)(state == 0x80000000);
+    *state = (*state << 1) | btn_read;
+    if(*state == 0x80000000) return 0x01;
+    else if (*state == 0xFFFFFFFF) return 0x02;
+    else return 0x00;
+
+    // return (uint8_t)(state == 0x80000000);
 }
 
 

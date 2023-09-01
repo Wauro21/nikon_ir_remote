@@ -20,11 +20,15 @@ volatile uint16_t t1_max_counter_value = 0U;
 volatile uint8_t stop_button_timer = 0U;
 volatile uint8_t stop_button_flag = 0U;
 
-
 int main(void){
+    /// WIP
+    uint8_t button_state = 0x00;
+    uint8_t adc_enable = 0x00;
+    // uint8_t t1_config_flag = 0x00;
+    uint8_t busy = 0x00;
+    uint8_t stop = 0x00;
 
-    // uint8_t stop_btn_state = 0;
-
+    uint32_t button_debounce = 0;
 
 
     adc_status = 0x00;
@@ -84,29 +88,73 @@ int main(void){
     sei();
 
     while(1){
-        if(readButton()){
-            /// Read adc and set timer 1 limit
-            readInterval();
-            if(t1_max_counter_value == 0U) sendCMD();
-            else{
-                /// Start timer 1
-                startTimer1();
-                GIMSK |= _BV(INT0); /// Enable pin change interrupt
-                while(1){
-                    if(t1_interrupt_counter == 0U) sendCMD();
 
-                    /// Request stop
-                    
-                }
+        /// Check the button state
+        button_state = readButton(&button_debounce);
+        if((button_state == 0x01) && (busy == 0x00)) {
+            busy = 0x01;
+            adc_enable = 0x01;
+        }
+
+        else if(button_state == 0x02 && busy == 0x01){
+            stop_button_flag = 0x01;
+            if(stop_button_timer == 10U){
+                PORTB |= _BV(PB4);
+                stop = 0x01;
             }
         }
+
+        else if(button_state == 0x01 && stop == 0x01){
+            busy = 0x00;
+            stopTimer1();
+            t1_interrupt_counter = 0U;
+            stop_button_timer = 0U;
+            stop_button_flag = 0U;
+            PORTB &= ~_BV(PB4);
+        }
+
+        /// Start shot routine
+        
+        /// Reads the pot value
+        if(adc_enable == 0x01){
+            readInterval();
+            adc_enable = 0x00;
+        }
+
+        /// Starts shoting
+        if(busy){
+            if(t1_max_counter_value == 0U){
+                sendCMD();
+                busy = 0x00;
+            }
+            else{
+                startTimer1();
+                if(t1_interrupt_counter == 0U) sendCMD();
+            }
+        }
+        
+
+
+        // if(readButton()){
+        //     /// Read adc and set timer 1 limit
+        //     readInterval();
+        //     if(t1_max_counter_value == 0U) sendCMD();
+        //     else{
+        //         /// Start timer 1
+        //         startTimer1();
+        //         while(1){
+        //             if(t1_interrupt_counter == 0U) sendCMD();
+
+        //         }
+        //     }
+        // }
     };
 
 }
 
-ISR(INT0_vect){
-    PORTB ^= _BV(PB4);
-}
+// ISR(INT0_vect){
+//     PORTB ^= _BV(PB4);
+// }
 
 ISR(ADC_vect){
     /// Read the ADC value and set the mode
@@ -188,7 +236,7 @@ ISR(ADC_vect){
             break;
 
         case 243 ... 255:
-            t1_max_counter_value = 299U; // 300 sec
+            t1_max_counter_value = 599U; // 300 sec
             break;
 
         default:
@@ -204,7 +252,7 @@ ISR(TIMER1_OVF_vect){
     if(t1_interrupt_counter < t1_max_counter_value) t1_interrupt_counter += 1;
     else t1_interrupt_counter = 0;
 
-    if(stop_button_flag) stop_button_timer += 1;
+    if(stop_button_flag) stop_button_timer += 1U;
 }
 
 
