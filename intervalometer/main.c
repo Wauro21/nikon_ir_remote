@@ -98,7 +98,7 @@ int main(void){
 
         else if(button_state == 0x02 && busy == 0x01){
             stop_button_flag = 0x01;
-            if(stop_button_timer == 10U){
+            if(stop_button_timer == 9U){
                 PORTB |= _BV(PB4);
                 stop = 0x01;
             }
