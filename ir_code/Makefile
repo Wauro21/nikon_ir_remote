@@ -12,9 +12,10 @@ IC_CLOCK=8000000UL
 
 default: build
 
+FILES_TO_BUILD := $(wildcard *.c)
 build:
 	@echo "[BUILD] Generating ELF file"
-	@$(CC) $(MAIN) -DF_CPU=$(IC_CLOCK) -mmcu=$(MMCU) -o $(OUT) $(WARNINGS_FLAGS)
+	@$(CC) $(FILES_TO_BUILD) -DF_CPU=$(IC_CLOCK) -mmcu=$(MMCU) -o $(OUT) $(WARNINGS_FLAGS)
 
 
 BUILD_RESULT := $(wildcard $(OUT))

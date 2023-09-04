@@ -76,7 +76,7 @@ int main(void)
 
             case 2U:
                 t1_enable = 1U;
-                t1_max_counter_value = 2U;
+                t1_max_counter_value = 3U;
                 break;
 
             case 3U:
