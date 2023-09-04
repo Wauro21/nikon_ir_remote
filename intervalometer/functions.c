@@ -1,16 +1,17 @@
 #include "functions.h"
 
-/// Button control
 
-uint8_t readButton(uint32_t* state){
+button_states readButton(uint32_t* state){
+    /// The button has negative logic, a press corresponds to a low level
     uint8_t btn_read = (~PINB & _BV(MAIN_BUTTON))>>MAIN_BUTTON;
+    /// The read value in inverted for positive logic and shifted
     /// Read and shift for debouncing
     *state = (*state << 1) | btn_read;
-    if(*state == 0x80000000) return 0x01;
-    else if (*state == 0xFFFFFFFF) return 0x02;
-    else return 0x00;
-
-    // return (uint8_t)(state == 0x80000000);
+    switch(*state){
+        case PRESS_BUTTON_MASK: return BUTTON_PRESS;
+        case HOLD_BUTTON_MASK: return BUTTON_HOLD;
+        default: return BUTTON_IDLE;
+    }
 }
 
 
