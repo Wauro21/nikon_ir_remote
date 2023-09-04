@@ -27,56 +27,12 @@ int main(void){
     uint8_t busy = 0x00;
     uint8_t stop = 0x00;
 
-    /// TEMPORAL -> Enable when pin is high
-    DDRB = 0; /// Inputs -> PB3 potentiometer, PB2 button
-    DDRB |= _BV(IR_LED) | _BV(STATUS_LED); /// PB0 used for IR led.
-
-    PORTB = 0; /// TEMPORAL
-    PORTB |= _BV(PB2); // Enable pull up of PB2
-
-    /// Interrupts 
-    MCUCR = 0;
-
-    GIMSK = 0;
-    // GIMSK |= _BV(PCIE); /// Enable pin change interrupt
-
-    PCMSK = 0;
-    // PCMSK |= _BV(PCINT4); /// Enable pin change interrupt on PB4
-
-
-    /// ADC configurations
-    ADMUX = 0;
-    ADCSRA = 0;
-    ADCSRB = 0;
-
-    /// Set left adjust (8bit precision) and PB3 as input
-    ADMUX |= _BV(ADLAR) | TIME_SELECTOR_IO;
-
-    /// Enable ADC interrupts and select 128 prescaler for 62,5 kHz sampling freq
-    ADCSRA |= _BV(ADIE) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
-    
-
-    // /// TIMERS CONFIGURATION
-    /// TIMER 0
-    TCCR0A = 0;
-    TCCR0B = 0;
-    TCNT0 = 0;
-    TIMSK = 0;
-    TCCR0A |= _BV(COM0A0) | _BV(WGM01); // Set toggle on match and CTC mode
-    //TCCR0B |= _BV(CS00);                // internal clock no-prescaling
-    OCR0A = 104;                        // For app 38,8kHz
-
-
-
-    /// TIMER 1
-    TCCR1 = 0;
-    GTCCR = 0;
-    TCNT1 = 0;
-    TIMSK = 0;
-    /// Enable timer1 interrupt overflow and Timer0 for CTC
-    TIMSK |= _BV(TOIE1) | _BV(OCIE0A);
-
-
+    /// Configure registers
+    setupIO();
+    setupADC();
+    setupTimer0();
+    setupTimer1();
+    setupTimerInterrupts();
     sei();
 
     while(1){

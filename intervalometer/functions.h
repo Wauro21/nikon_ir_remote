@@ -89,4 +89,16 @@ void stopTimer1(void);
 
 void sendCMD(void);
 
+
+void setupIO(void);
+
+
+void setupADC(void);
+
+void setupTimer0(void);
+
+void setupTimer1(void);
+
+void setupTimerInterrupts(void);
+
 #endif

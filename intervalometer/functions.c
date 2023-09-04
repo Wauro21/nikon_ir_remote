@@ -56,18 +56,16 @@ void stopTimer1(void){
 /// @brief Setups the timer 0 register to generate a 38kHz square wave.
 /// @brief acts as the carrier of the IR signal.
 /// @param  void
-// void setupTimer0(void)
-// {
-//     // Default registers
-//     TCCR0A = 0;
-//     TCCR0B = 0;
-//     TCNT0 = 0;
-//     TIMSK = 0;
-//     TCCR0A |= _BV(COM0A0) | _BV(WGM01); // Set toggle on match and CTC mode
-//     TCCR0B |= _BV(CS00);                // internal clock no-prescaling
-//     OCR0A = 104;                        // For app 38,8kHz
-//     return;
-// }
+void setupTimer0(void)
+{
+    // Default registers
+    TCCR0A = 0;
+    TCCR0B = 0;
+    TCNT0 = 0;
+    TCCR0A |= _BV(COM0A0) | _BV(WGM01); // Set toggle on match and CTC mode
+    OCR0A = 104;                        // For app 38,8kHz
+    return;
+}
 
 void startTimer0(void){
     TCCR0B |= _BV(CS00);
@@ -89,4 +87,47 @@ void sendCMD(void){
     }
 
     stopTimer0();
+}
+
+
+void setupIO(void){
+    DDRB = 0; /// Clear the reg
+    /// Inputs
+    DDRB &= ~_BV(MAIN_BUTTON) & ~_BV(POTENTIOMETER);
+
+    /// Outputs
+    DDRB |= _BV(IR_LED) | _BV(STATUS_LED);
+
+    /// Clear output values enable pull-up for main-button
+    PORTB = 0;
+    PORTB |= _BV(PB2);
+}
+
+
+void setupADC(void){
+    /// Clear register before configuration
+    ADMUX = 0;
+    ADCSRA = 0;
+    ADCSRB = 0;
+
+    /// Set left adjust (8bit precision) and PB3 as input
+    ADMUX |= _BV(ADLAR) | TIME_SELECTOR_IO;
+
+    /// Enable ADC interrupts and select 128 prescaler for 62,5 kHz sampling freq
+    ADCSRA |= _BV(ADIE) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
+}
+
+
+
+void setupTimer1(void){
+    TCCR1 = 0;
+    GTCCR = 0;
+    TCNT1 = 0;
+    TIMSK = 0;
+}
+
+
+void setupTimerInterrupts(void){
+    TIMSK = 0;
+    TIMSK |= _BV(TOIE1) | _BV(OCIE0A);
 }
