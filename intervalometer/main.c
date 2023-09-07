@@ -7,7 +7,8 @@
 /// TEMPORAL
 volatile uint8_t stop_button_timer = 0U;
 volatile uint8_t stop_button_flag = 0U;
-uint8_t request_sleep = 0U;
+uint8_t deep_sleep = 0U;
+uint8_t light_sleep = 0U;
 
 int main(void){
     /// Initialize vars
@@ -48,9 +49,17 @@ int main(void){
     while(1){
 
         /// sleep configuration
-        if(request_sleep){
-            request_sleep = 0U;
+        if(deep_sleep){
+            deep_sleep = 0U;
             enableInt0Interrupt();
+            set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+            sleep_mode();
+        }
+
+        if(light_sleep){
+            light_sleep = 0U;
+            enableInt0Interrupt();
+            set_sleep_mode(SLEEP_MODE_IDLE);
             sleep_mode();
         }
 
@@ -72,7 +81,7 @@ int main(void){
                     stop_button_flag = 0U;
                     PORTB &= ~_BV(PB4);
                     stop = 0x00;
-                    request_sleep = 0x01;
+                    deep_sleep = 0x01;
                 }
                 break;
 
@@ -103,13 +112,14 @@ int main(void){
                 sendCMD();
                 busy = 0x00;
                 /// Enter power down
-                request_sleep = 0x01;
+                deep_sleep = 0x01;
             }
             else{
                 startTimer1();
                 if(t1_interrupt_counter == 0U) {
                     sendCMD();
                     /// Enter light sleep
+                    light_sleep = 0x01;
                 }
             }
         }
@@ -218,7 +228,9 @@ ISR(TIMER1_OVF_vect){
     if(t1_interrupt_counter < t1_max_counter_value) t1_interrupt_counter += 1;
     else {
         t1_interrupt_counter = 0;
-        /// Exit power off
+        /// Exit idle
+        disableInt0Interrupt();
+        sleep_disable();
     }
 
     if(stop_button_flag) stop_button_timer += 1U;
