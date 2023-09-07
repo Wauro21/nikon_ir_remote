@@ -18,11 +18,13 @@ button_states readButton(uint32_t* state){
 /// ADC
 
 void enableADC(void){
+    PRR &= ~_BV(PRADC);
     ADCSRA |= _BV(ADEN);
 }
 
 void stopADC(void){
     ADCSRA &= ~_BV(ADEN);
+    PRR |= _BV(PRADC);
 }
 
 void triggerADC(void){
@@ -31,6 +33,7 @@ void triggerADC(void){
 
 void readInterval(void){
     /// enable and start the ADC
+    enablePot();
     enableADC();
     triggerADC();
 
@@ -39,10 +42,17 @@ void readInterval(void){
 
     /// State value is set, clean adc_status flag
     adc_status = 0x00;
+
+    // Stop adc
+    stopADC();
+    disablePot();
 }
 
 
 void startTimer1(void){
+    /// Power timer 1
+    PRR &= ~_BV(PRTIM1);
+
     /// Starts the timer 1 with system clock and prescaler of 16324
     TCCR1 |= _BV(CS13) | _BV(CS12) | _BV(CS11) | _BV(CS10);
 }
@@ -50,6 +60,9 @@ void startTimer1(void){
 
 void stopTimer1(void){
     TCCR1 = 0;
+
+    /// Power off timer
+    PRR |= _BV(PRTIM1);
 }
 
 
@@ -68,11 +81,18 @@ void setupTimer0(void)
 }
 
 void startTimer0(void){
+
+    /// Power timer 0
+    PRR &= ~_BV(PRTIM0);
+
     TCCR0B |= _BV(CS00);
 }
 
 void stopTimer0(void){
     TCCR0B &= ~_BV(CS00);
+
+    /// Power off timer 0
+    PRR |= _BV(PRTIM0);
 }
 
 
@@ -96,11 +116,19 @@ void setupIO(void){
     DDRB &= ~_BV(MAIN_BUTTON) & ~_BV(POTENTIOMETER);
 
     /// Outputs
-    DDRB |= _BV(IR_LED) | _BV(STATUS_LED);
+    DDRB |= _BV(IR_LED) | _BV(STATUS_LED) | _BV(POT_VCC);
 
     /// Clear output values enable pull-up for main-button
     PORTB = 0;
     PORTB |= _BV(PB2);
+}
+
+void enablePot(void){
+    PORTB |= _BV(POT_VCC); /// powers the potentiometer
+}
+
+void disablePot(void){
+    PORTB &= ~_BV(POT_VCC);
 }
 
 
@@ -130,4 +158,26 @@ void setupTimer1(void){
 void setupTimerInterrupts(void){
     TIMSK = 0;
     TIMSK |= _BV(TOIE1) | _BV(OCIE0A);
+}
+
+
+void powerReduction(void){
+    PRR = 0;
+    /// power everything off
+    PRR |= _BV(PRTIM1) | _BV(PRTIM0) | _BV(PRUSI) | _BV(PRADC);
+}
+
+void configureWakeUp(void){
+    /// Configure INT0 as interrupt
+    MCUCR = 0;
+    GIMSK = 0;
+    GIMSK |= _BV(INT0); /// Enable int0 interrupt
+}
+
+void enableInt0Interrupt(void){
+    GIMSK |= _BV(INT0);
+}
+
+void disableInt0Interrupt(void){
+    GIMSK &= ~_BV(INT0);
 }

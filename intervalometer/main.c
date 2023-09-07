@@ -1,11 +1,13 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/sleep.h>
 #include "functions.h"
 
 
 /// TEMPORAL
 volatile uint8_t stop_button_timer = 0U;
 volatile uint8_t stop_button_flag = 0U;
+uint8_t request_sleep = 0U;
 
 int main(void){
     /// Initialize vars
@@ -26,16 +28,31 @@ int main(void){
     uint8_t adc_enable = 0x00;
     uint8_t busy = 0x00;
     uint8_t stop = 0x00;
-
     /// Configure registers
     setupIO();
     setupADC();
     setupTimer0();
     setupTimer1();
     setupTimerInterrupts();
+    powerReduction();
+    configureWakeUp();
+
     sei();
 
+
+    /// -> Enter power down 
+    set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+    sleep_mode();
+    
+
     while(1){
+
+        /// sleep configuration
+        if(request_sleep){
+            request_sleep = 0U;
+            enableInt0Interrupt();
+            sleep_mode();
+        }
 
         /// Check the button state
         button_state = readButton(&button_debounce);
@@ -55,6 +72,7 @@ int main(void){
                     stop_button_flag = 0U;
                     PORTB &= ~_BV(PB4);
                     stop = 0x00;
+                    request_sleep = 0x01;
                 }
                 break;
 
@@ -84,19 +102,25 @@ int main(void){
             if(t1_max_counter_value == 0U){
                 sendCMD();
                 busy = 0x00;
+                /// Enter power down
+                request_sleep = 0x01;
             }
             else{
                 startTimer1();
-                if(t1_interrupt_counter == 0U) sendCMD();
+                if(t1_interrupt_counter == 0U) {
+                    sendCMD();
+                    /// Enter light sleep
+                }
             }
         }
     };
 
 }
 
-// ISR(INT0_vect){
-//     PORTB ^= _BV(PB4);
-// }
+ISR(INT0_vect){
+    sleep_disable();
+    disableInt0Interrupt();
+}
 
 ISR(ADC_vect){
     /// Read the ADC value and set the mode
@@ -192,7 +216,10 @@ ISR(ADC_vect){
 
 ISR(TIMER1_OVF_vect){
     if(t1_interrupt_counter < t1_max_counter_value) t1_interrupt_counter += 1;
-    else t1_interrupt_counter = 0;
+    else {
+        t1_interrupt_counter = 0;
+        /// Exit power off
+    }
 
     if(stop_button_flag) stop_button_timer += 1U;
 }

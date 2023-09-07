@@ -13,6 +13,7 @@
 /// ---> Outputs
 #define IR_LED PB0
 #define STATUS_LED PB4
+#define POT_VCC PB1
 
 /// ->Debouncer parameters
 #define PRESS_BUTTON_MASK 0x80000000
@@ -100,5 +101,18 @@ void setupTimer0(void);
 void setupTimer1(void);
 
 void setupTimerInterrupts(void);
+
+void enablePot(void);
+
+void disablePot(void);
+
+
+void powerReduction(void);
+
+void configureWakeUp(void);
+
+void enableInt0Interrupt(void);
+
+void disableInt0Interrupt(void);
 
 #endif
